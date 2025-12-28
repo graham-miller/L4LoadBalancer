@@ -3,31 +3,31 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-// 1. Get the port assigned by Aspire. 
-// If not running in Aspire, it defaults to 5001.
-string? envPort = Environment.GetEnvironmentVariable("PORT");
-
-int port = !string.IsNullOrEmpty(envPort) ? int.Parse(envPort) :
-           (args.Length > 0 ? int.Parse(args[0]) : 5001);
+// 1. Get the port from Aspire's environment variable
+var portStr = Environment.GetEnvironmentVariable("PORT");
+if (!int.TryParse(portStr, out var port))
+{
+    Console.WriteLine("Error: PORT environment variable not set.");
+    return;
+}
 
 var listener = new TcpListener(IPAddress.Any, port);
-
 listener.Start();
-Console.WriteLine($"Backend listening on port {port}...");
+Console.WriteLine($"[Backend] Listening on port {port}...");
 
 while (true)
 {
-    // Wait for a connection from the Load Balancer
     var client = await listener.AcceptTcpClientAsync();
     _ = HandleClientAsync(client);
 }
 
 async Task HandleClientAsync(TcpClient client)
 {
-    Console.WriteLine($"[Backend {port}] New connection received.");
+    Console.WriteLine($"[Backend {port}] New connection from {client.Client.RemoteEndPoint}");
 
     using var stream = client.GetStream();
     var reader = PipeReader.Create(stream);
+    var writer = PipeWriter.Create(stream);
 
     try
     {
@@ -36,13 +36,19 @@ async Task HandleClientAsync(TcpClient client)
             ReadResult result = await reader.ReadAsync();
             var buffer = result.Buffer;
 
+            if (buffer.IsEmpty && result.IsCompleted) break;
+
+            // Process and Echo back the data
             foreach (var segment in buffer)
             {
-                // Process the data (e.g., log it to console)
                 var message = Encoding.UTF8.GetString(segment.Span);
-                Console.Write($"[Backend {port} received]: {message}");
+                Console.Write($"[Backend {port} Recv]: {message}");
+
+                // Write back to the client
+                await writer.WriteAsync(segment);
             }
 
+            // Tell the reader we've consumed the data
             reader.AdvanceTo(buffer.End);
 
             if (result.IsCompleted) break;
@@ -50,11 +56,12 @@ async Task HandleClientAsync(TcpClient client)
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Connection error: {ex.Message}");
+        Console.WriteLine($"[Backend {port}] Error: {ex.Message}");
     }
     finally
     {
         await reader.CompleteAsync();
-        Console.WriteLine("Connection closed.");
+        await writer.CompleteAsync();
+        Console.WriteLine($"[Backend {port}] Connection closed.");
     }
 }

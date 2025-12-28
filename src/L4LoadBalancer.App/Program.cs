@@ -1,60 +1,69 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.ServiceDiscovery;
 using System.Net;
 using System.Net.Sockets;
 
 var builder = Host.CreateApplicationBuilder(args);
 var config = builder.Configuration;
 
-// Aspire maps these because of the .WithReference calls in AppHost
-var backendUrls = new List<string>
-{
-    config["BACKEND1_TCP-PIPE"] ?? throw new Exception("Backend 1 not found"),
-    config["BACKEND2_TCP-PIPE"] ?? throw new Exception("Backend 2 not found"),
-    config["BACKEND3_TCP-PIPE"] ?? throw new Exception("Backend 3 not found")
+// 1. Resolve Backend URLs from Aspire Reference
+// These keys (backend1, backend2, backend3) match your AppHost names
+var backendUrls = new[] {
+    config["BACKEND1_TCP-PIPE"] ?? throw new Exception("Backend 1 missing"),
+    config["BACKEND2_TCP-PIPE"] ?? throw new Exception("Backend 2 missing"),
+    config["BACKEND3_TCP-PIPE"] ?? throw new Exception("Backend 3 missing")
 };
 
-Console.WriteLine("Discovered Backends:");
-foreach (var url in backendUrls)
-{
-    Console.WriteLine($" -> {url}");
-}
-
-var portStr = Environment.GetEnvironmentVariable("PORT_ADMIN_ENTRY") ?? "8080";
-int port = int.Parse(portStr);
-
-var listener = new TcpListener(IPAddress.Any, port);
+// 2. Determine listening port (Assigned by AppHost .WithEndpoint env: "PORT")
+int lbPort = int.Parse(Environment.GetEnvironmentVariable("PORT") ?? "8080");
+var listener = new TcpListener(IPAddress.Any, lbPort);
 listener.Start();
-Console.WriteLine($"Load Balancer listening on {port}...");
 
+Console.WriteLine($"[LB] Listening on port {lbPort}");
+foreach (var url in backendUrls) Console.WriteLine($"[LB] Registered Backend: {url}");
 
-int roundRobinCounter = 0;
+int roundRobin = 0;
 
 while (true)
 {
+    // Wait for incoming TCP connection
     var client = await listener.AcceptTcpClientAsync();
 
-    // Simple Round Robin selection
-    var targetUrl = backendUrls[roundRobinCounter % backendUrls.Count];
-    roundRobinCounter++;
+    // Select backend (Round Robin)
+    var targetUrl = backendUrls[roundRobin % backendUrls.Length];
+    roundRobin++;
 
     // Fire and forget the proxy task
-    _ = Task.Run(() => ProxyTrafficAsync(client, targetUrl));
+    _ = Task.Run(() => ProxyAsync(client, targetUrl));
 }
 
-async Task ProxyTrafficAsync(TcpClient client, string targetUrl)
+async Task ProxyAsync(TcpClient client, string targetUrl)
 {
-    using var backend = new TcpClient();
-    var parts = targetUrl.Split(':');
-    await backend.ConnectAsync(parts[0], int.Parse(parts[1]));
+    try
+    {
+        // Aspire gives URLs like "tcp://localhost:12345" - we strip the protocol
+        var uri = new Uri(targetUrl.Replace("tcp://", "http://"));
 
-    using var clientStream = client.GetStream();
-    using var backendStream = backend.GetStream();
+        using var backend = new TcpClient();
+        await backend.ConnectAsync(uri.Host, uri.Port);
 
-    // Use CopyToAsync which is optimized for Pipelines/Streams in .NET
-    var clientToBackend = clientStream.CopyToAsync(backendStream);
-    var backendToClient = backendStream.CopyToAsync(clientStream);
+        using var clientStream = client.GetStream();
+        using var backendStream = backend.GetStream();
 
-    await Task.WhenAny(clientToBackend, backendToClient);
+        Console.WriteLine($"[LB] Proxying: Client -> {uri.Port}");
+
+        // Bidirectional copy (L4 Bridge)
+        await Task.WhenAny(
+            clientStream.CopyToAsync(backendStream),
+            backendStream.CopyToAsync(clientStream)
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[LB] Connection Error: {ex.Message}");
+    }
+    finally
+    {
+        client.Dispose();
+    }
 }
