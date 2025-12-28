@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/L4LoadBalancer.App/L4LoadBalancer.App.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/L4LoadBalancer.MockBackend/L4LoadBalancer.MockBackend.csproj" />
+  </Folder>
+  <Project Path="L4LoadBalancer.AppHost/L4LoadBalancer.AppHost.csproj" />
+  <Project Path="L4LoadBalancer.ServiceDefaults/L4LoadBalancer.ServiceDefaults.csproj" />
+</Solution>
