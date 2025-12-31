@@ -35,11 +35,18 @@ internal static class LoadBalancerProjectResourceBuilderExtensions
             using var client = new TcpClient(endpoint.Host, endpoint.Port);
             using var stream = client.GetStream();
 
+            // Send data
             var data = Encoding.UTF8.GetBytes($"Test at {DateTime.Now:t}");
             await stream.WriteAsync(data, context.CancellationToken);
-            await stream.FlushAsync(context.CancellationToken);
-            client.Client.Shutdown(SocketShutdown.Send);
-            await Task.Delay(100);
+
+            // Read response
+            byte[] buffer = new byte[1024];
+            int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+            string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+            //await stream.FlushAsync(context.CancellationToken);
+            //client.Client.Shutdown(SocketShutdown.Send);
+            //await Task.Delay(100);
 
             return CommandResults.Success();
         }
