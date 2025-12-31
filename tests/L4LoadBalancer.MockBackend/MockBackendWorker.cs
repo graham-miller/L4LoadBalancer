@@ -1,6 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using L4LoadBalancer.MockBackend;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
@@ -9,14 +10,12 @@ using System.Text;
 public class MockBackendWorker : BackgroundService
 {
     private readonly ILogger<MockBackendWorker> _logger;
-    private readonly IConfiguration _config;
     private readonly int _port;
 
-    public MockBackendWorker(ILogger<MockBackendWorker> logger, IConfiguration config)
+    public MockBackendWorker(ILogger<MockBackendWorker> logger, IOptions<MockBackendWorkerOptions> options)
     {
         _logger = logger;
-        _config = config;
-        _port = int.Parse(_config["PORT"]!);
+        _port = options.Value.Port;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
