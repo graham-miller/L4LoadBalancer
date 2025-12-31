@@ -106,6 +106,8 @@ public class LoadBalancerServer : BackgroundService
         }
         finally
         {
+            clientStream.Close();
+            backendStream.Close();
             Interlocked.Decrement(ref backend.ActiveConnections);
         }
     }
