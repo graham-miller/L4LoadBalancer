@@ -1,9 +1,9 @@
-﻿using System.Net;
-using System.Net.Sockets;
+﻿using L4LoadBalancer.App.Abstractions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using L4LoadBalancer.App.Abstractions;
-using L4LoadBalancer.App.Models;
+using Microsoft.Extensions.Options;
+using System.Net;
+using System.Net.Sockets;
 
 namespace L4LoadBalancer.App.Core;
 
@@ -12,16 +12,18 @@ public class LoadBalancerServer : BackgroundService
     private readonly ILogger<LoadBalancerServer> _logger;
     private readonly BackendRegistry _registry;
     private readonly ILoadBalancingStrategy _strategy;
-    private readonly int _listeningPort = 8080; // Example port
+    private readonly int _listeningPort;
 
     public LoadBalancerServer(
         ILogger<LoadBalancerServer> logger,
         BackendRegistry registry,
-        ILoadBalancingStrategy strategy)
+        ILoadBalancingStrategy strategy,
+        IOptions<LoadBalancerOptions> options)
     {
         _logger = logger;
         _registry = registry;
         _strategy = strategy;
+        _listeningPort = options.Value.Port;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

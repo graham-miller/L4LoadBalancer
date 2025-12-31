@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace L4LoadBalancer.App.Models;
+namespace L4LoadBalancer.App.Core;
 
 public class BackendServer
 {
@@ -27,5 +27,4 @@ public class BackendServer
 
         return new BackendServer(new IPEndPoint(ipAddress, uri.Port));
     }
-
 }

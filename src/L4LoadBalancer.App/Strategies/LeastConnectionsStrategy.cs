@@ -1,5 +1,5 @@
 ﻿using L4LoadBalancer.App.Abstractions;
-using L4LoadBalancer.App.Models;
+using L4LoadBalancer.App.Core;
 
 namespace L4LoadBalancer.App.Strategies;
 

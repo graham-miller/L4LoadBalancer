@@ -1,20 +1,11 @@
-﻿using L4LoadBalancer.App.Models;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Net;
 
 namespace L4LoadBalancer.App.Core;
 
 public class BackendRegistry
 {
-    // ConcurrentBag or ConcurrentDictionary for thread-safe access
-    private readonly ConcurrentBag<BackendServer> _servers = new();
-
-    //public void RegisterServer(string host, int port)
-    //{
-    //    var endPoint = new IPEndPoint(IPAddress.Parse(host), port);
-
-    //    _servers.Add(new BackendServer(endPoint));
-    //}
+    private readonly ConcurrentBag<BackendServer> _servers = [];
 
     public void RegisterServerFromUri(string uriString)
     {

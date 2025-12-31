@@ -44,10 +44,6 @@ internal static class LoadBalancerProjectResourceBuilderExtensions
             int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
             string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
-            //await stream.FlushAsync(context.CancellationToken);
-            //client.Client.Shutdown(SocketShutdown.Send);
-            //await Task.Delay(100);
-
             return CommandResults.Success();
         }
         catch (Exception ex)
