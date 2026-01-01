@@ -46,7 +46,7 @@ internal static class LoadBalancerProjectResourceBuilderExtensions
 
                 using var stream = client.GetStream();
 
-                var message = $"TEST {i + 1} at {DateTime.Now:HH:mm:ss.fff}";
+                var message = $"TEST {i + 1} of {count} at {DateTime.Now:HH:mm:ss.fff}";
                 var data = Encoding.UTF8.GetBytes(message);
                 await stream.WriteAsync(data, context.CancellationToken);
 

@@ -1,29 +1,37 @@
 using L4LoadBalancer.AppHost.Extensions;
+using Microsoft.Extensions.Configuration;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Build load balancer
+var config = builder.Configuration.GetSection("L4Demo");
+var backendPorts = config.GetSection("BackendPorts").Get<int[]>() ?? [];
+var publicPort = config.GetValue<int>("PublicPort");
+
 const string publicEndpointName = "public";
 var loadBalancer = builder
-    .AddProject<Projects.L4LoadBalancer_App>("loadbalancer", launchProfileName: null)
-    .WithEndpoint(scheme: "tcp", port: 8080, name: publicEndpointName, isProxied: false, env: "PORT");
+    .AddProject<Projects.L4LoadBalancer_App>("loadbalancer")
+    .WithEndpoint(scheme: "tcp", port: publicPort, name: publicEndpointName, isProxied: false)
+    .WithEnvironment("PORT", publicPort.ToString());
 
 loadBalancer
     .WithSendTcpTestCommands(loadBalancer.GetEndpoint(publicEndpointName));
 
-// Build backends
-const int backendCount = 3;
-for (var i = 1; i <= backendCount; i++)
+for (var i = 0; i < backendPorts.Length; i++)
 {
-    var backendPort = 5000 + i;
+    var port = backendPorts[i];
+    var backendName = $"backend{i + 1}";
 
     var backend = builder
-        .AddProject<Projects.L4LoadBalancer_MockBackend>($"backend{i}", launchProfileName: null)
-        .WithEndpoint(scheme: "tcp", name: "tcp-pipe", port: backendPort, env: "PORT", isProxied: false);
+        .AddProject<Projects.L4LoadBalancer_MockBackend>(backendName)
+        .WithEndpoint(
+            scheme: "tcp",
+            name: "tcp-pipe",
+            port: port,
+            isProxied: false
+        )
+        .WithEnvironment("PORT", port.ToString());
 
-    loadBalancer
-        .WithReference(backend)
-        .WaitFor(backend);
+    loadBalancer.WithReference(backend).WaitFor(backend);
 }
 
 builder.Build().Run();
