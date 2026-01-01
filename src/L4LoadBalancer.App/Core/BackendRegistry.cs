@@ -7,21 +7,9 @@ public class BackendRegistry
 {
     private readonly ConcurrentBag<BackendServer> _servers = [];
 
-    public void RegisterServerFromUri(string uriString)
+    public void RegisterServer(IPEndPoint endpoint)
     {
-        var uri = new Uri(uriString);
-        var host = uri.Host;
-        var port = uri.Port;
-
-        // Resolve 'localhost' or hostnames to IP addresses
-        // This is important because TcpClient.ConnectAsync(IPAddress, port) 
-        // needs a concrete IP, not a hostname string.
-        var addresses = Dns.GetHostAddresses(host);
-        var ipAddress = addresses.FirstOrDefault(a =>
-            a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-            ?? addresses.First();
-
-        _servers.Add(new BackendServer(new IPEndPoint(ipAddress, port)));
+        _servers.Add(new BackendServer(endpoint));
     }
 
     public IEnumerable<BackendServer> GetAll() => _servers;

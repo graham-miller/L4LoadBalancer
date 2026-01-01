@@ -1,5 +1,6 @@
 ﻿using L4LoadBalancer.App.Abstractions;
 using L4LoadBalancer.App.Core;
+using L4LoadBalancer.App.Extensions;
 using L4LoadBalancer.App.Infrastructure;
 using L4LoadBalancer.App.Strategies;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,12 @@ builder.Services.AddSingleton<BackendRegistry>();
 builder.Services.AddSingleton<ILoadBalancingStrategy, RoundRobinStrategy>();
 //builder.Services.AddSingleton<ILoadBalancingStrategy, LeastConnectionsStrategy>();
 
+builder.Services.Configure<HealthMonitorOptions>(options => {
+    options.CheckInterval = TimeSpan.FromSeconds(5);
+    options.Timeout = TimeSpan.FromSeconds(2);
+});
+builder.Services.AddHostedService<HealthMonitorService>();
+
 builder.Services.Configure<LoadBalancerOptions>(options => {
     var port = int.Parse(Environment.GetEnvironmentVariable("PORT") ?? throw new Exception("PORT missing"));
     options.Port = port;
@@ -18,13 +25,11 @@ builder.Services.Configure<LoadBalancerOptions>(options => {
 
 builder.Services.AddHostedService<LoadBalancerServer>();
 
-builder.Services.AddHostedService<HealthMonitorService>();
-
 var host = builder.Build();
 
 var registry = host.Services.GetRequiredService<BackendRegistry>();
-registry.RegisterServerFromUri(builder.Configuration["BACKEND1_TCP-PIPE"] ?? throw new Exception("Backend 1 missing"));
-registry.RegisterServerFromUri(builder.Configuration["BACKEND2_TCP-PIPE"] ?? throw new Exception("Backend 2 missing"));
-registry.RegisterServerFromUri(builder.Configuration["BACKEND3_TCP-PIPE"] ?? throw new Exception("Backend 3 missing"));
+registry.RegisterServer(builder.GetBackendEndpoint("BACKEND1_TCP-PIPE"));
+registry.RegisterServer(builder.GetBackendEndpoint("BACKEND2_TCP-PIPE"));
+registry.RegisterServer(builder.GetBackendEndpoint("BACKEND3_TCP-PIPE"));
 
 await host.RunAsync();

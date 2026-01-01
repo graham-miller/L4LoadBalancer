@@ -18,28 +18,28 @@ public class MockBackendWorker : BackgroundService
         _port = options.Value.Port;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         var listener = new TcpListener(IPAddress.Any, _port);
         listener.Start();
         _logger.LogInformation("[Backend] Listening on port {Port}...", _port);
 
         // Ensure the listener stops when the token is cancelled
-        using (stoppingToken.Register(() => listener.Stop()))
+        using (cancellationToken.Register(listener.Stop))
         {
             try
             {
-                while (!stoppingToken.IsCancellationRequested)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     // AcceptTcpClientAsync will throw an OperationCanceledException 
                     // or SocketException when listener.Stop() is called via the token
-                    var client = await listener.AcceptTcpClientAsync(stoppingToken);
-                    _ = HandleClientAsync(client, stoppingToken);
+                    var client = await listener.AcceptTcpClientAsync(cancellationToken);
+                    _ = HandleClientAsync(client, cancellationToken);
                 }
             }
             catch (Exception ex) when (ex is OperationCanceledException or SocketException)
             {
-                _logger.LogInformation("[Backend] Listener is shutting down gracefully...");
+                _logger.LogInformation("[Backend] Listener is shutting down");
             }
             finally
             {
@@ -48,10 +48,10 @@ public class MockBackendWorker : BackgroundService
         }
     }
 
-    private async Task HandleClientAsync(TcpClient client, CancellationToken ct)
+    private async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
     {
         var remoteEndPoint = client.Client.RemoteEndPoint;
-        _logger.LogInformation("[Backend {Port}] New connection from {Remote}", _port, remoteEndPoint);
+        //_logger.LogInformation("[Backend {Port}] New connection from {Remote}", _port, remoteEndPoint);
 
         using (client)
         {
@@ -61,9 +61,9 @@ public class MockBackendWorker : BackgroundService
 
             try
             {
-                while (!ct.IsCancellationRequested)
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    ReadResult result = await reader.ReadAsync(ct);
+                    ReadResult result = await reader.ReadAsync(cancellationToken);
                     var buffer = result.Buffer;
 
                     if (buffer.IsEmpty && result.IsCompleted) break;
@@ -71,9 +71,9 @@ public class MockBackendWorker : BackgroundService
                     foreach (var segment in buffer)
                     {
                         var message = Encoding.UTF8.GetString(segment.Span);
-                        _logger.LogInformation("[Backend {Port} Recv]: {Msg}", _port, message);
+                        _logger.LogInformation("[Backend {Port}] Received: {Msg}", _port, message);
 
-                        await writer.WriteAsync(segment, ct);
+                        await writer.WriteAsync(segment, cancellationToken);
                     }
 
                     reader.AdvanceTo(buffer.End);
@@ -92,7 +92,7 @@ public class MockBackendWorker : BackgroundService
             {
                 await reader.CompleteAsync();
                 await writer.CompleteAsync();
-                _logger.LogInformation("[Backend {Port}] Connection closed for {Remote}", _port, remoteEndPoint);
+                //_logger.LogInformation("[Backend {Port}] Connection closed for {Remote}", _port, remoteEndPoint);
             }
         }
     }

@@ -6,7 +6,7 @@ namespace L4LoadBalancer.AppHost.Extensions;
 
 internal static class LoadBalancerProjectResourceBuilderExtensions
 {
-    public static IResourceBuilder<ProjectResource> WithSendTcpTestCommand(
+    public static IResourceBuilder<ProjectResource> WithSendTcpTestCommands(
         this IResourceBuilder<ProjectResource> builder,
         EndpointReference endpoint)
     {
@@ -22,33 +22,53 @@ internal static class LoadBalancerProjectResourceBuilderExtensions
             displayName: "Send TCP test packet",
             executeCommand: context => OnRunSendTcpTestCommand(context, endpoint),
             commandOptions: commandOptions);
+        
+        builder.WithCommand(
+            name: "send-multiple tcp-test",
+            displayName: "Send multiple TCP test packets",
+            executeCommand: context => OnRunSendTcpTestCommand(context, endpoint, 10),
+            commandOptions: commandOptions);
 
         return builder;
     }
 
     private static async Task<ExecuteCommandResult> OnRunSendTcpTestCommand(
         ExecuteCommandContext context,
-        EndpointReference endpoint)
+        EndpointReference endpoint,
+        int count = 1)
     {
+        var tasks = Enumerable.Range(0, count).Select(async i =>
+        {
+            try
+            {
+                using var client = new TcpClient();
+                await client.ConnectAsync(endpoint.Host, endpoint.Port, context.CancellationToken);
+
+                using var stream = client.GetStream();
+
+                var message = $"TEST {i + 1} at {DateTime.Now:HH:mm:ss.fff}";
+                var data = Encoding.UTF8.GetBytes(message);
+                await stream.WriteAsync(data, context.CancellationToken);
+
+                byte[] buffer = new byte[1024];
+                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, context.CancellationToken);
+                return Encoding.UTF8.GetString(buffer, 0, bytesRead);
+            }
+            catch (Exception ex)
+            {
+                return $"Error in request {i}: {ex.Message}";
+            }
+        });
+
         try
         {
-            using var client = new TcpClient(endpoint.Host, endpoint.Port);
-            using var stream = client.GetStream();
-
-            // Send data
-            var data = Encoding.UTF8.GetBytes($"Test at {DateTime.Now:t}");
-            await stream.WriteAsync(data, context.CancellationToken);
-
-            // Read response
-            byte[] buffer = new byte[1024];
-            int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
-            string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+            string[] results = await Task.WhenAll(tasks);
 
             return CommandResults.Success();
         }
         catch (Exception ex)
         {
-            return CommandResults.Failure(ex.Message);
+            return CommandResults.Failure($"Parallel execution failed: {ex.Message}");
         }
     }
 

@@ -1,7 +1,8 @@
-﻿using System.Net.Sockets;
-using L4LoadBalancer.App.Core;
+﻿using L4LoadBalancer.App.Core;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System.Net.Sockets;
 
 namespace L4LoadBalancer.App.Infrastructure;
 
@@ -9,30 +10,35 @@ public class HealthMonitorService : BackgroundService
 {
     private readonly BackendRegistry _registry;
     private readonly ILogger<HealthMonitorService> _logger;
-    private readonly TimeSpan _checkInterval = TimeSpan.FromSeconds(5);
+    private readonly TimeSpan _checkInterval;
+    private readonly TimeSpan _timeout;
 
-    public HealthMonitorService(BackendRegistry registry, ILogger<HealthMonitorService> logger)
+    public HealthMonitorService(
+        BackendRegistry registry,
+        ILogger<HealthMonitorService> logger,
+        IOptions<HealthMonitorOptions> options)
     {
         _registry = registry;
         _logger = logger;
+        _checkInterval = options.Value.CheckInterval;
+        _timeout = options.Value.Timeout;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while (!cancellationToken.IsCancellationRequested)
         {
             var servers = _registry.GetAll();
 
-            // 1. Run checks in parallel so one slow backend doesn't stall the loop
+            // Run checks in parallel so one slow backend doesn't stall the loop
             var tasks = servers.Select(async server =>
             {
-                bool isAlive = await CheckHealthAsync(server, stoppingToken);
+                bool isAlive = await CheckHealthAsync(server, cancellationToken);
 
                 if (server.IsHealthy != isAlive)
                 {
                     server.IsHealthy = isAlive;
-                    _logger.LogWarning("Server {EndPoint} health changed to: {Status}",
-                        server.EndPoint, isAlive ? "Healthy" : "Unhealthy");
+                    _logger.LogWarning("Server {EndPoint} health changed to: {Status}", server.EndPoint, isAlive ? "Healthy" : "Unhealthy");
                 }
             });
 
@@ -40,25 +46,21 @@ public class HealthMonitorService : BackgroundService
 
             try
             {
-                await Task.Delay(_checkInterval, stoppingToken);
+                await Task.Delay(_checkInterval, cancellationToken);
             }
             catch (OperationCanceledException) { break; }
         }
     }
 
-    private async Task<bool> CheckHealthAsync(BackendServer server, CancellationToken ct)
+    private async Task<bool> CheckHealthAsync(BackendServer server, CancellationToken cancellationToken)
     {
-        // 2. Use a dedicated timeout token for this specific check
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        cts.CancelAfter(TimeSpan.FromSeconds(2));
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(_timeout);
 
         using var client = new TcpClient();
         try
         {
-            // 3. Attempt the connection
             await client.ConnectAsync(server.EndPoint.Address, server.EndPoint.Port, cts.Token);
-
-            // At Layer 4, if the handshake completes, we are "Healthy"
             return true;
         }
         catch (Exception ex) when (ex is SocketException or OperationCanceledException)
@@ -73,11 +75,7 @@ public class HealthMonitorService : BackgroundService
         }
         finally
         {
-            // 4. Ensure the socket is closed immediately after the check
-            if (client.Connected)
-            {
-                client.Close();
-            }
+            if (client.Connected) client.Close();
         }
     }
 }

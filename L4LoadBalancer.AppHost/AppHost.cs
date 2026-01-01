@@ -9,7 +9,7 @@ var loadBalancer = builder
     .WithEndpoint(scheme: "tcp", port: 8080, name: publicEndpointName, isProxied: false, env: "PORT");
 
 loadBalancer
-    .WithSendTcpTestCommand(loadBalancer.GetEndpoint(publicEndpointName));
+    .WithSendTcpTestCommands(loadBalancer.GetEndpoint(publicEndpointName));
 
 // Build backends
 const int backendCount = 3;
