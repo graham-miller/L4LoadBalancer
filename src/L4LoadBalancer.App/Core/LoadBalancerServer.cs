@@ -12,17 +12,20 @@ public class LoadBalancerServer : BackgroundService
     private readonly ILogger<LoadBalancerServer> _logger;
     private readonly BackendRegistry _registry;
     private readonly ILoadBalancingStrategy _strategy;
+    private readonly ITrafficProxy _proxy;
     private readonly int _port;
 
     public LoadBalancerServer(
         ILogger<LoadBalancerServer> logger,
         BackendRegistry registry,
         ILoadBalancingStrategy strategy,
+        ITrafficProxy proxy,
         IOptions<LoadBalancerOptions> options)
     {
         _logger = logger;
         _registry = registry;
         _strategy = strategy;
+        _proxy = proxy;
         _port = options.Value.Port;
     }
 
@@ -66,41 +69,12 @@ public class LoadBalancerServer : BackgroundService
 
             try
             {
-                await ProxyTrafficAsync(client, backend, cancellationToken);
+                await _proxy.ProxyTrafficAsync(client, backend, cancellationToken);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogError(ex, "Error occurred during traffic proxying to {Backend}", backend.EndPoint);
             }
-        }
-    }
-
-    private async Task ProxyTrafficAsync(TcpClient client, BackendServer backend, CancellationToken cancellationToken)
-    {
-        using var backendClient = new TcpClient();
-
-        await backendClient.ConnectAsync(backend.EndPoint, cancellationToken);
-
-        using var clientStream = client.GetStream();
-        using var backendStream = backendClient.GetStream();
-
-        _logger.LogInformation("Proxying: {Client} <-> {Backend}", client.Client.RemoteEndPoint, backend.EndPoint);
-
-        Interlocked.Increment(ref backend.ActiveConnections);
-
-        try
-        {
-            var clientToBackend = clientStream.CopyToAsync(backendStream, cancellationToken);
-            var backendToClient = backendStream.CopyToAsync(clientStream, cancellationToken);
-
-            // Wait for either stream to close
-            await Task.WhenAny(clientToBackend, backendToClient);
-        }
-        finally
-        {
-            clientStream.Close();
-            backendStream.Close();
-            Interlocked.Decrement(ref backend.ActiveConnections);
         }
     }
 }

@@ -23,6 +23,8 @@ builder.Services.Configure<LoadBalancerOptions>(options => {
     options.Port = port;
 });
 
+builder.Services.AddSingleton<ITrafficProxy, TcpTrafficProxy>();
+builder.Services.AddSingleton<IHealthChecker, TcpHealthChecker>();
 builder.Services.AddHostedService<LoadBalancerServer>();
 
 var host = builder.Build();

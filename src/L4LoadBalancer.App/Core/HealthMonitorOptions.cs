@@ -1,4 +1,4 @@
-﻿namespace L4LoadBalancer.App.Infrastructure;
+﻿namespace L4LoadBalancer.App.Core;
 
 public class HealthMonitorOptions
 {
