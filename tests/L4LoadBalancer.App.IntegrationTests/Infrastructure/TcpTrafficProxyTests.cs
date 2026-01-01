@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using L4LoadBalancer.App.Abstractions;
 using L4LoadBalancer.App.Core;
+using L4LoadBalancer.App.Infrastructure;
 
 namespace L4LoadBalancer.App.IntegrationTests.Infrastructure;
 
@@ -20,7 +20,7 @@ public class TcpTrafficProxyTests
     [Test]
     public async Task ProxyTrafficAsync_SuccessfullyRelaysDataBetweenClientAndBackend()
     {
-        // Arrange: Setup a dummy backend listener
+        // Arrange: setup a dummy backend listener
         var backendListener = new TcpListener(IPAddress.Loopback, 0);
         backendListener.Start();
         var backendEndPoint = (IPEndPoint)backendListener.LocalEndpoint;
@@ -47,7 +47,7 @@ public class TcpTrafficProxyTests
             await stream.WriteAsync(responseData);
         });
 
-        // Act: Use the proxy to connect a client to our dummy backend
+        // Act: use the proxy to connect a client to our dummy backend
         using var fakeClient = new TcpClient();
 
         var proxyListener = new TcpListener(IPAddress.Loopback, 0);
@@ -70,12 +70,12 @@ public class TcpTrafficProxyTests
         var clientBytesRead = await clientStream.ReadAsync(clientBuffer, 0, clientBuffer.Length);
         receivedByClient = Encoding.UTF8.GetString(clientBuffer, 0, clientBytesRead);
 
-        // 3. Assert
-        Assert.Multiple(() =>
+        // Assert
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(receivedByBackend, Is.EqualTo(messageFromClient));
             Assert.That(receivedByClient, Is.EqualTo(messageFromBackend));
-        });
+        };
 
         backendListener.Stop();
         proxyListener.Stop();

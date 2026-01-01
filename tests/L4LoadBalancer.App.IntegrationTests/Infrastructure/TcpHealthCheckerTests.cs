@@ -43,11 +43,11 @@ public class TcpHealthCheckerTests
     [Test]
     public async Task IsServerAliveAsync_WhenPortIsNotListening_ReturnsFalse()
     {
-        // Arrange: Use a port that is guaranteed not to be listening (by starting and immediately stopping a listener)
+        // Arrange: use a port that is guaranteed not to be listening (by starting and immediately stopping a listener)
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var endPoint = (IPEndPoint)listener.LocalEndpoint;
-        listener.Stop(); // Port is now closed
+        listener.Stop();
 
         var server = new BackendServer(endPoint);
 
@@ -61,8 +61,7 @@ public class TcpHealthCheckerTests
     [Test]
     public async Task IsServerAliveAsync_WhenTimeoutOccurs_ReturnsFalse()
     {
-        // Arrange: We point to an IP that is likely to drop packets (non-routable)
-        // or simply use a very tiny timeout with a real endpoint.
+        // Arrange: point to an IP that is likely to drop packets (non-routable) or use a tiny timeout
         var endPoint = new IPEndPoint(IPAddress.Parse("192.168.255.255"), 80);
         var server = new BackendServer(endPoint);
         var tinyTimeout = TimeSpan.FromMilliseconds(1);

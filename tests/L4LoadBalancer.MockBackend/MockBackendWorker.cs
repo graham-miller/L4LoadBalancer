@@ -12,10 +12,10 @@ public class MockBackendWorker : BackgroundService
     private readonly ILogger<MockBackendWorker> _logger;
     private readonly int _port;
 
-    public MockBackendWorker(ILogger<MockBackendWorker> logger, IOptions<MockBackendWorkerOptions> options)
+    public MockBackendWorker(IOptions<MockBackendWorkerOptions> options, ILogger<MockBackendWorker> logger)
     {
-        _logger = logger;
         _port = options.Value.Port;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -24,21 +24,20 @@ public class MockBackendWorker : BackgroundService
         listener.Start();
         _logger.LogInformation("[Backend] Listening on port {Port}...", _port);
 
-        // Ensure the listener stops when the token is cancelled
         using (cancellationToken.Register(listener.Stop))
         {
             try
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    // AcceptTcpClientAsync will throw an OperationCanceledException 
-                    // or SocketException when listener.Stop() is called via the token
                     var client = await listener.AcceptTcpClientAsync(cancellationToken);
                     _ = HandleClientAsync(client, cancellationToken);
                 }
             }
             catch (Exception ex) when (ex is OperationCanceledException or SocketException)
             {
+                // AcceptTcpClientAsync will throw an OperationCanceledException 
+                // or SocketException when listener.Stop() is called via the token
                 _logger.LogInformation("[Backend] Listener is shutting down");
             }
             finally
@@ -77,6 +76,7 @@ public class MockBackendWorker : BackgroundService
                     }
 
                     reader.AdvanceTo(buffer.End);
+
                     if (result.IsCompleted) break;
                 }
             }

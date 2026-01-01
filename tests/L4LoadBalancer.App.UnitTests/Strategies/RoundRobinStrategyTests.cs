@@ -55,13 +55,13 @@ public class RoundRobinStrategyTests
         var servers = new List<BackendServer> { server1, server2, server3 };
 
         // Act & Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(_sut.GetNextServer(servers), Is.SameAs(server1));
             Assert.That(_sut.GetNextServer(servers), Is.SameAs(server2));
             Assert.That(_sut.GetNextServer(servers), Is.SameAs(server3));
             Assert.That(_sut.GetNextServer(servers), Is.SameAs(server1));
-        });
+        };
     }
 
     [Test]
@@ -78,11 +78,11 @@ public class RoundRobinStrategyTests
         var second = _sut.GetNextServer(servers);
 
         // Assert
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(first, Is.SameAs(healthy1));
             Assert.That(second, Is.SameAs(healthy2));
-        });
+        };
     }
 
     [Test]

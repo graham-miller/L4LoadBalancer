@@ -6,15 +6,15 @@ namespace L4LoadBalancer.App.Infrastructure;
 
 public class TcpHealthChecker : IHealthChecker
 {
-    public async Task<bool> IsServerAliveAsync(BackendServer server, TimeSpan timeout, CancellationToken ct)
+    public async Task<bool> IsServerAliveAsync(BackendServer server, TimeSpan timeout, CancellationToken cancellationToken)
     {
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        linkedCts.CancelAfter(timeout);
+        using var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        linkedTokenSource.CancelAfter(timeout);
 
         using var client = new TcpClient();
         try
         {
-            await client.ConnectAsync(server.EndPoint.Address, server.EndPoint.Port, linkedCts.Token);
+            await client.ConnectAsync(server.EndPoint.Address, server.EndPoint.Port, linkedTokenSource.Token);
             return true;
         }
         catch (Exception ex) when (ex is SocketException or OperationCanceledException)

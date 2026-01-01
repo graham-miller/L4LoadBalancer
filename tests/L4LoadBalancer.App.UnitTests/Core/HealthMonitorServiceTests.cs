@@ -1,5 +1,6 @@
 ﻿using L4LoadBalancer.App.Abstractions;
 using L4LoadBalancer.App.Core;
+using L4LoadBalancer.App.UnitTests.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -30,7 +31,7 @@ public class HealthMonitorServiceTests
             Timeout = TimeSpan.FromMilliseconds(10)
         });
 
-        _sut = new HealthMonitorService(_registry, _logger, _healthChecker, _options);
+        _sut = new HealthMonitorService(_registry, _healthChecker, _options, _logger);
     }
 
     [TearDown]
@@ -43,14 +44,14 @@ public class HealthMonitorServiceTests
     public async Task ExecuteAsync_WhenServerBecomesUnhealthy_UpdatesStateAndLogs()
     {
         // Arrange
-        var endpoint = new IPEndPoint(IPAddress.Loopback, 80);
-        _registry.RegisterServer(endpoint);
+        _registry.RegisterServer(IPEndPoint.Create());
         var server = _registry.GetAll().First();
-        server.IsHealthy = true; // Start Healthy
+        server.IsHealthy = true;
 
         // Mock the checker to return false (Unhealthy)
-        _healthChecker.IsServerAliveAsync(server, Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
-                      .Returns(false);
+        _healthChecker
+            .IsServerAliveAsync(server, Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
+            .Returns(false);
 
         // Act
         using var cts = new CancellationTokenSource();
@@ -60,7 +61,7 @@ public class HealthMonitorServiceTests
         await _sut.StopAsync(cts.Token);
 
         // Assert
-        Assert.That(server.IsHealthy, Is.False, "Server should have been marked Unhealthy.");
+        Assert.That(server.IsHealthy, Is.False);
         _logger.Received().Log(
             LogLevel.Warning,
             Arg.Any<EventId>(),

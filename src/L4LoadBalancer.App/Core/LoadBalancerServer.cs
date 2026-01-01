@@ -9,24 +9,24 @@ namespace L4LoadBalancer.App.Core;
 
 public class LoadBalancerServer : BackgroundService
 {
-    private readonly ILogger<LoadBalancerServer> _logger;
     private readonly BackendRegistry _registry;
     private readonly ILoadBalancingStrategy _strategy;
     private readonly ITrafficProxy _proxy;
     private readonly int _port;
+    private readonly ILogger<LoadBalancerServer> _logger;
 
     public LoadBalancerServer(
-        ILogger<LoadBalancerServer> logger,
         BackendRegistry registry,
         ILoadBalancingStrategy strategy,
         ITrafficProxy proxy,
-        IOptions<LoadBalancerOptions> options)
+        IOptions<LoadBalancerOptions> options,
+        ILogger<LoadBalancerServer> logger)
     {
-        _logger = logger;
         _registry = registry;
         _strategy = strategy;
         _proxy = proxy;
         _port = options.Value.Port;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -55,7 +55,7 @@ public class LoadBalancerServer : BackgroundService
         }
     }
 
-    private async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
+    protected async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
     {
         using (client)
         {

@@ -1,14 +1,14 @@
 ﻿using L4LoadBalancer.App.Abstractions;
 using L4LoadBalancer.App.Core;
+using L4LoadBalancer.App.UnitTests.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 
-namespace L4LoadBalancer.App.Tests.Core;
+namespace L4LoadBalancer.App.UnitTests.Core;
 
 [TestFixture]
 public class LoadBalancerServerTests
@@ -18,7 +18,7 @@ public class LoadBalancerServerTests
     private ILoadBalancingStrategy _strategy;
     private ITrafficProxy _proxy;
     private IOptions<LoadBalancerOptions> _options;
-    private LoadBalancerServer _sut;
+    private LoadBalancerServerTestWrapper _sut;
 
     [SetUp]
     public void SetUp()
@@ -31,7 +31,7 @@ public class LoadBalancerServerTests
 
         _options.Value.Returns(new LoadBalancerOptions { Port = 8080 });
 
-        _sut = new LoadBalancerServer(_logger, _registry, _strategy, _proxy, _options);
+        _sut = new LoadBalancerServerTestWrapper(_registry, _strategy, _proxy, _options, _logger);
     }
 
     [TearDown]
@@ -48,7 +48,7 @@ public class LoadBalancerServerTests
         var client = new TcpClient();
 
         // Act
-        await InvokeHandleClientAsync(client);
+        await _sut.HandleClientAsync(client);
 
         // Assert
         _logger.Received(1).Log(
@@ -65,12 +65,12 @@ public class LoadBalancerServerTests
     public async Task HandleClientAsync_WhenBackendFound_DelegatesToProxy()
     {
         // Arrange
-        var backend = new BackendServer(new IPEndPoint(IPAddress.Loopback, 9000));
+        var backend = BackendServer.Create();
         _strategy.GetNextServer(Arg.Any<IEnumerable<BackendServer>>()).Returns(backend);
         var client = new TcpClient();
 
         // Act
-        await InvokeHandleClientAsync(client);
+        await _sut.HandleClientAsync(client);
 
         // Assert
         await _proxy.Received(1).ProxyTrafficAsync(client, backend, Arg.Any<CancellationToken>());
@@ -80,7 +80,7 @@ public class LoadBalancerServerTests
     public async Task HandleClientAsync_WhenProxyFails_LogsError()
     {
         // Arrange
-        var backend = new BackendServer(new IPEndPoint(IPAddress.Loopback, 9000));
+        var backend = BackendServer.Create();
         _strategy.GetNextServer(Arg.Any<IEnumerable<BackendServer>>()).Returns(backend);
         var client = new TcpClient();
 
@@ -89,7 +89,7 @@ public class LoadBalancerServerTests
               .Throws(exception);
 
         // Act
-        await InvokeHandleClientAsync(client);
+        await _sut.HandleClientAsync(client);
 
         // Assert
         _logger.Received(1).Log(
@@ -100,15 +100,20 @@ public class LoadBalancerServerTests
             Arg.Any<Func<object, Exception?, string>>());
     }
 
-    /// <summary>
-    /// Helper to invoke the private HandleClientAsync method via reflection
-    /// </summary>
-    private async Task InvokeHandleClientAsync(TcpClient client)
+    private class LoadBalancerServerTestWrapper : LoadBalancerServer
     {
-        var method = typeof(LoadBalancerServer).GetMethod("HandleClientAsync",
-            BindingFlags.NonPublic | BindingFlags.Instance);
+        public LoadBalancerServerTestWrapper(
+            BackendRegistry registry,
+            ILoadBalancingStrategy strategy,
+            ITrafficProxy proxy,
+            IOptions<LoadBalancerOptions> options,
+            ILogger<LoadBalancerServer> logger)
+            : base(registry, strategy, proxy, options, logger)
+        { }
 
-        var task = (Task)method!.Invoke(_sut, [client, CancellationToken.None])!;
-        await task;
+        public async Task HandleClientAsync(TcpClient client)
+        {
+            await HandleClientAsync(client, CancellationToken.None);
+        }
     }
 }

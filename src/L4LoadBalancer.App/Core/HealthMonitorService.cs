@@ -1,39 +1,40 @@
 ﻿using L4LoadBalancer.App.Abstractions;
-using L4LoadBalancer.App.Core;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
+namespace L4LoadBalancer.App.Core;
+
 public class HealthMonitorService : BackgroundService
 {
     private readonly BackendRegistry _registry;
-    private readonly ILogger<HealthMonitorService> _logger;
     private readonly IHealthChecker _healthChecker;
     private readonly TimeSpan _checkInterval;
     private readonly TimeSpan _timeout;
+    private readonly ILogger<HealthMonitorService> _logger;
 
     public HealthMonitorService(
         BackendRegistry registry,
-        ILogger<HealthMonitorService> logger,
         IHealthChecker healthChecker,
-        IOptions<HealthMonitorOptions> options)
+        IOptions<HealthMonitorOptions> options,
+        ILogger<HealthMonitorService> logger)
     {
         _registry = registry;
-        _logger = logger;
         _healthChecker = healthChecker;
         _checkInterval = options.Value.CheckInterval;
         _timeout = options.Value.Timeout;
+        _logger = logger;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while (!cancellationToken.IsCancellationRequested)
         {
             var servers = _registry.GetAll();
 
             var tasks = servers.Select(async server =>
             {
-                bool isAlive = await _healthChecker.IsServerAliveAsync(server, _timeout, stoppingToken);
+                var isAlive = await _healthChecker.IsServerAliveAsync(server, _timeout, cancellationToken);
 
                 if (server.IsHealthy != isAlive)
                 {
@@ -44,7 +45,7 @@ public class HealthMonitorService : BackgroundService
             });
 
             await Task.WhenAll(tasks);
-            await Task.Delay(_checkInterval, stoppingToken);
+            await Task.Delay(_checkInterval, cancellationToken);
         }
     }
 }
