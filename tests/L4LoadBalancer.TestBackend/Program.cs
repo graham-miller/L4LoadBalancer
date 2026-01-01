@@ -1,11 +1,11 @@
-﻿using L4LoadBalancer.MockBackend;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
+using L4LoadBalancer.TestBackend;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.Configure<MockBackendWorkerOptions>(options =>
+builder.Services.Configure<TestBackendWorkerOptions>(options =>
 {
     var port = builder.Configuration.GetValue<int>("PORT");
 
@@ -17,7 +17,7 @@ builder.Services.Configure<MockBackendWorkerOptions>(options =>
     options.Port = port;
 });
 
-builder.Services.AddHostedService<MockBackendWorker>();
+builder.Services.AddHostedService<TestBackendWorker>();
 
 var host = builder.Build();
 host.Run();

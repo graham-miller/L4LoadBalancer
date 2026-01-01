@@ -1,5 +1,4 @@
-﻿using L4LoadBalancer.MockBackend;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.IO.Pipelines;
@@ -7,12 +6,14 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-public class MockBackendWorker : BackgroundService
+namespace L4LoadBalancer.TestBackend;
+
+public class TestBackendWorker : BackgroundService
 {
-    private readonly ILogger<MockBackendWorker> _logger;
+    private readonly ILogger<TestBackendWorker> _logger;
     private readonly int _port;
 
-    public MockBackendWorker(IOptions<MockBackendWorkerOptions> options, ILogger<MockBackendWorker> logger)
+    public TestBackendWorker(IOptions<TestBackendWorkerOptions> options, ILogger<TestBackendWorker> logger)
     {
         _port = options.Value.Port;
         _logger = logger;

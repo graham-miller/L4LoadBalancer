@@ -22,7 +22,7 @@ for (var i = 0; i < backendPorts.Length; i++)
     var backendName = $"backend{i + 1}";
 
     var backend = builder
-        .AddProject<Projects.L4LoadBalancer_MockBackend>(backendName)
+        .AddProject<Projects.L4LoadBalancer_TestBackend>(backendName)
         .WithEndpoint(
             scheme: "tcp",
             name: "tcp-pipe",

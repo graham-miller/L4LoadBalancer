@@ -5,7 +5,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/L4LoadBalancer.App.IntegrationTests/L4LoadBalancer.App.IntegrationTests.csproj" Id="6930af79-416d-405b-9cad-8028d81ba9e8" />
     <Project Path="tests/L4LoadBalancer.App.UnitTests/L4LoadBalancer.App.UnitTests.csproj" />
-    <Project Path="tests/L4LoadBalancer.MockBackend/L4LoadBalancer.MockBackend.csproj" />
+    <Project Path="tests/L4LoadBalancer.TestBackend/L4LoadBalancer.TestBackend.csproj" />
   </Folder>
   <Project Path="L4LoadBalancer.AppHost/L4LoadBalancer.AppHost.csproj" />
 </Solution>

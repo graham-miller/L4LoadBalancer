@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\L4LoadBalancer.App\L4LoadBalancer.App.csproj" />
-    <ProjectReference Include="..\tests\L4LoadBalancer.MockBackend\L4LoadBalancer.MockBackend.csproj" />
+    <ProjectReference Include="..\tests\L4LoadBalancer.TestBackend\L4LoadBalancer.TestBackend.csproj" />
   </ItemGroup>
 
 </Project>
