@@ -47,7 +47,7 @@ Then, login to the Aspire dashboard at https://l4loadbalancer.dev.localhost:1726
   - **Send TCP test packet**: sends single test packet.
   - **Send multiple TCP test packets**: sends multiple packets to demonstrate load balancing.
 
-![Alternative Text](docs/resources/aspire-dashboard.png)
+![L4LoadBalancer Aspire dashboard showing custom resource commands for testing](docs/resources/aspire-dashboard.png)
 
 ## Configuration
 
