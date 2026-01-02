@@ -10,7 +10,11 @@ A software-based Layer 4 (TCP) load balancer for distributing traffic across mul
 - **TCP-based**: pure Layer 4 proxying without application-layer concerns.
 - **Configurable**: flexible settings via `appsettings.json` and environment variables.
 
-## Getting Started
+## Architecture
+
+- Logical Clean Architecture within L4LoadBalancer.App project to separate concerns. This could be refactored to different projects as the solution grows.
+
+## Getting started
 
 ### Prerequisites
 - .NET 10
@@ -40,7 +44,7 @@ aspire run
 
 ## Configuration
 
-### LoadBalancing Strategy
+### LoadBalancing strategy
 
 In `appsettings.json`:
 
@@ -52,7 +56,7 @@ In `appsettings.json`:
 - `LeastConnections`: routes to the server with fewest active connections. Better for long-lived connections.
 
 
-### Health Monitoring
+### Health monitoring
 
 ```
 { "HealthMonitor": { "CheckInterval": "00:00:05", "Timeout": "00:00:02" } }
