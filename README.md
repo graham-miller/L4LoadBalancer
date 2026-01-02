@@ -12,7 +12,8 @@ A software-based Layer 4 (TCP) load balancer for distributing traffic across mul
 
 ## Architecture
 
-- Logical Clean Architecture within L4LoadBalancer.App project to separate concerns. This could be refactored to different projects as the solution grows.
+- Logical separation of concerns following Clean Architecture within _L4LoadBalancer.App_ project.
+This separation of concerns could be refactored to multiple projects as the solution grows.
 
 ## Getting started
 
@@ -21,18 +22,24 @@ A software-based Layer 4 (TCP) load balancer for distributing traffic across mul
 
 ### Demo with Aspire
 
-Start the full orchestrated environment with 3 test backends:
+> NB. Aspire has been used _only_ to simplify running the demo by providing a convenient dashboard
+to start and stop backend services, display logging output, and send test TCP packets. Default Aspire
+proxying has been disabled to allow L4LoadBalancer to handle TCP connections directly.
+
+Start the full orchestrated demo environment with 3 test backends:
 
 ```
 dotnet run --project L4LoadBalancer.AppHost/
 ```
 
-Open Aspire dashboard at [https://l4loadbalancer.dev.localhost:17263/](https://l4loadbalancer.dev.localhost:17263/).
+Alternatively, if you have Aspire CLI installed, it can be used to start the demo environment:
 
-Alternatively, if you have Aspire CLI installed, you can start the environment with:
 ```
 aspire run
 ```
+
+Then, login to the Aspire dashboard at https://l4loadbalancer.dev.localhost:17263/login?t=83ca573c7817570d5febd682fa90e348.
+
 
 - Load balancer listens on port 8080.
 - Test backends run on ports 5001, 5002, 5003.
@@ -46,7 +53,7 @@ aspire run
 
 ### LoadBalancing strategy
 
-In `appsettings.json`:
+In `src/L4LoadBalancer.App/appsettings.json`:
 
 ```
 { "LoadBalancer": { "Strategy": "RoundRobin"  // or "LeastConnections" } }

@@ -1,6 +1,11 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
     <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Solution Items/docs/" />
+  <Folder Name="/Solution Items/docs/resources/">
+    <File Path="docs/resources/aspire-dashboard.png" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/L4LoadBalancer.App/L4LoadBalancer.App.csproj" />
