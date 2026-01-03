@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using System.Net;
 using System.Net.Sockets;
 
 namespace L4LoadBalancer.App.UnitTests.Core;
@@ -100,17 +99,14 @@ public class LoadBalancerServerTests
             Arg.Any<Func<object, Exception?, string>>());
     }
 
-    private class LoadBalancerServerTestWrapper : LoadBalancerServer
+    private class LoadBalancerServerTestWrapper(
+        BackendRegistry registry,
+        ILoadBalancingStrategy strategy,
+        ITrafficProxy proxy,
+        IOptions<LoadBalancerOptions> options,
+        ILogger<LoadBalancerServer> logger)
+        : LoadBalancerServer(registry, strategy, proxy, options, logger)
     {
-        public LoadBalancerServerTestWrapper(
-            BackendRegistry registry,
-            ILoadBalancingStrategy strategy,
-            ITrafficProxy proxy,
-            IOptions<LoadBalancerOptions> options,
-            ILogger<LoadBalancerServer> logger)
-            : base(registry, strategy, proxy, options, logger)
-        { }
-
         public async Task HandleClientAsync(TcpClient client)
         {
             await HandleClientAsync(client, CancellationToken.None);

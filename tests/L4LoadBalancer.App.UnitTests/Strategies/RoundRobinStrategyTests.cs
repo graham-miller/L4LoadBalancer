@@ -61,7 +61,7 @@ public class RoundRobinStrategyTests
             Assert.That(_sut.GetNextServer(servers), Is.SameAs(server2));
             Assert.That(_sut.GetNextServer(servers), Is.SameAs(server3));
             Assert.That(_sut.GetNextServer(servers), Is.SameAs(server1));
-        };
+        }
     }
 
     [Test]
@@ -82,7 +82,7 @@ public class RoundRobinStrategyTests
         {
             Assert.That(first, Is.SameAs(healthy1));
             Assert.That(second, Is.SameAs(healthy2));
-        };
+        }
     }
 
     [Test]

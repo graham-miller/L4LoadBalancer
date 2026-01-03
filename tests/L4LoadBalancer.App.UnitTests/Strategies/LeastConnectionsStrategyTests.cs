@@ -18,7 +18,7 @@ public class LeastConnectionsStrategyTests
     [Test]
     public void GetNextServer_WhenPoolIsEmpty_ReturnsNull()
     {
-        var result = _sut.GetNextServer(Enumerable.Empty<BackendServer>());
+        var result = _sut.GetNextServer([]);
         Assert.That(result, Is.Null);
     }
 

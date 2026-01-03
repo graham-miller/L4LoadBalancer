@@ -1,7 +1,6 @@
-﻿using System.Net;
+﻿using L4LoadBalancer.App.Infrastructure;
+using System.Net;
 using System.Net.Sockets;
-using L4LoadBalancer.App.Core;
-using L4LoadBalancer.App.Infrastructure;
 
 namespace L4LoadBalancer.App.IntegrationTests.Infrastructure;
 
@@ -24,12 +23,11 @@ public class TcpHealthCheckerTests
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var endPoint = (IPEndPoint)listener.LocalEndpoint;
-        var server = new BackendServer(endPoint);
 
         try
         {
             // Act
-            var result = await _sut.IsServerAliveAsync(server, _defaultTimeout, CancellationToken.None);
+            var result = await _sut.IsServerAliveAsync(endPoint, _defaultTimeout, CancellationToken.None);
 
             // Assert
             Assert.That(result, Is.True);
@@ -49,10 +47,8 @@ public class TcpHealthCheckerTests
         var endPoint = (IPEndPoint)listener.LocalEndpoint;
         listener.Stop();
 
-        var server = new BackendServer(endPoint);
-
         // Act
-        var result = await _sut.IsServerAliveAsync(server, _defaultTimeout, CancellationToken.None);
+        var result = await _sut.IsServerAliveAsync(endPoint, _defaultTimeout, CancellationToken.None);
 
         // Assert
         Assert.That(result, Is.False);
@@ -63,11 +59,10 @@ public class TcpHealthCheckerTests
     {
         // Arrange: point to an IP that is likely to drop packets (non-routable) or use a tiny timeout
         var endPoint = new IPEndPoint(IPAddress.Parse("192.168.255.255"), 80);
-        var server = new BackendServer(endPoint);
         var tinyTimeout = TimeSpan.FromMilliseconds(1);
 
         // Act
-        var result = await _sut.IsServerAliveAsync(server, tinyTimeout, CancellationToken.None);
+        var result = await _sut.IsServerAliveAsync(endPoint, tinyTimeout, CancellationToken.None);
 
         // Assert
         Assert.That(result, Is.False);

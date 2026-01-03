@@ -1,6 +1,8 @@
-﻿namespace L4LoadBalancer.App.Abstractions;
+﻿using System.Net;
+
+namespace L4LoadBalancer.App.Abstractions;
 
 public interface IHealthChecker
 {
-    Task<bool> IsServerAliveAsync(IBackendServer server, TimeSpan timeout, CancellationToken ct);
+    Task<bool> IsServerAliveAsync(IPEndPoint endPoint, TimeSpan timeout, CancellationToken ct);
 }

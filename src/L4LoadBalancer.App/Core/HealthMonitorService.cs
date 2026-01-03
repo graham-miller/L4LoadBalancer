@@ -34,7 +34,7 @@ public class HealthMonitorService : BackgroundService
 
             var tasks = servers.Select(async server =>
             {
-                var isAlive = await _healthChecker.IsServerAliveAsync(server, _timeout, cancellationToken);
+                var isAlive = await _healthChecker.IsServerAliveAsync(server.EndPoint, _timeout, cancellationToken);
 
                 if (server.IsHealthy != isAlive)
                 {

@@ -1,8 +1,8 @@
-﻿using L4LoadBalancer.App.Core;
+﻿using System.Net;
+using L4LoadBalancer.App.Core;
 using L4LoadBalancer.App.UnitTests.TestUtilities;
-using System.Net;
 
-namespace L4LoadBalancer.App.Tests;
+namespace L4LoadBalancer.App.UnitTests.Core;
 
 [TestFixture]
 public class BackendServerTests

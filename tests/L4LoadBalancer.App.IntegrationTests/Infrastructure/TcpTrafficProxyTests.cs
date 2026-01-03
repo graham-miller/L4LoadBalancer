@@ -32,10 +32,10 @@ public class TcpTrafficProxyTests
         string? receivedByClient = null;
 
         // Start backend handling logic in a separate task
-        var backendTask = Task.Run(async () =>
+        _ = Task.Run(async () =>
         {
             using var serverClient = await backendListener.AcceptTcpClientAsync();
-            using var stream = serverClient.GetStream();
+            await using var stream = serverClient.GetStream();
 
             // Read from client
             var buffer = new byte[1024];
@@ -58,10 +58,10 @@ public class TcpTrafficProxyTests
         using var incomingClient = await proxyListener.AcceptTcpClientAsync();
         await clientConnectTask;
 
-        var proxyTask = _sut.ProxyTrafficAsync(incomingClient, backendServer, CancellationToken.None);
+        _ = _sut.ProxyTrafficAsync(incomingClient, backendServer, CancellationToken.None);
 
         // Send data from the fake client to the proxy
-        using var clientStream = fakeClient.GetStream();
+        await using var clientStream = fakeClient.GetStream();
         var requestData = Encoding.UTF8.GetBytes(messageFromClient);
         await clientStream.WriteAsync(requestData);
 
@@ -75,7 +75,7 @@ public class TcpTrafficProxyTests
         {
             Assert.That(receivedByBackend, Is.EqualTo(messageFromClient));
             Assert.That(receivedByClient, Is.EqualTo(messageFromBackend));
-        };
+        }
 
         backendListener.Stop();
         proxyListener.Stop();

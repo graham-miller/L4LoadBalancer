@@ -46,14 +46,14 @@ internal static class LoadBalancerProjectResourceBuilderExtensions
                 using var client = new TcpClient();
                 await client.ConnectAsync(endpoint.Host, endpoint.Port, context.CancellationToken);
 
-                using var stream = client.GetStream();
+                await using var stream = client.GetStream();
 
                 var message = $"TEST {i + 1} of {count} at {DateTime.Now:HH:mm:ss.fff}";
                 var data = Encoding.UTF8.GetBytes(message);
                 await stream.WriteAsync(data, context.CancellationToken);
 
-                byte[] buffer = new byte[1024];
-                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, context.CancellationToken);
+                var buffer = new byte[1024];
+                var bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, context.CancellationToken);
                 return Encoding.UTF8.GetString(buffer, 0, bytesRead);
             }
             catch (Exception ex)
@@ -64,7 +64,7 @@ internal static class LoadBalancerProjectResourceBuilderExtensions
 
         try
         {
-            string[] results = await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
 
             return CommandResults.Success();
         }

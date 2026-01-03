@@ -5,15 +5,15 @@ namespace L4LoadBalancer.App.Infrastructure;
 
 public class TcpTrafficProxy : ITrafficProxy
 {
-    public async Task ProxyTrafficAsync(TcpClient client, IBackendServer backend, CancellationToken cancellationToken)
+    public async Task ProxyTrafficAsync(TcpClient client, IBackendServer server, CancellationToken cancellationToken)
     {
         using var backendClient = new TcpClient();
-        await backendClient.ConnectAsync(backend.EndPoint, cancellationToken);
+        await backendClient.ConnectAsync(server.EndPoint, cancellationToken);
 
-        using var clientStream = client.GetStream();
-        using var backendStream = backendClient.GetStream();
+        await using var clientStream = client.GetStream();
+        await using var backendStream = backendClient.GetStream();
 
-        backend.IncrementActiveConnections();
+        server.IncrementActiveConnections();
         try
         {
             var clientToBackend = clientStream.CopyToAsync(backendStream, cancellationToken);
@@ -22,7 +22,7 @@ public class TcpTrafficProxy : ITrafficProxy
         }
         finally
         {
-            backend.DecrementActiveConnections();
+            server.DecrementActiveConnections();
         }
     }
 }

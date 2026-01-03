@@ -68,8 +68,8 @@ public class BackendRegistryTests
     public void RegisterServer_IsThreadSafe()
     {
         // Arrange
-        int numberOfThreads = 10;
-        int serversPerThread = 100;
+        const int numberOfThreads = 10;
+        const int serversPerThread = 100;
 
         // Act
         Parallel.For(0, numberOfThreads, _ =>

@@ -44,18 +44,19 @@ public class HealthMonitorServiceTests
     public async Task ExecuteAsync_WhenServerBecomesUnhealthy_UpdatesStateAndLogs()
     {
         // Arrange
-        _registry.RegisterServer(IPEndPoint.Create());
+        var endPoint = IPEndPoint.Create();
+        _registry.RegisterServer(endPoint);
         var server = _registry.GetAll().First();
         server.SetHealthStatus(true);
 
         // Mock the checker to return false (Unhealthy)
         _healthChecker
-            .IsServerAliveAsync(server, Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
+            .IsServerAliveAsync(endPoint, Arg.Any<TimeSpan>(), Arg.Any<CancellationToken>())
             .Returns(false);
 
         // Act
         using var cts = new CancellationTokenSource();
-        var task = _sut.StartAsync(cts.Token);
+        _ = _sut.StartAsync(cts.Token);
 
         await Task.Delay(100); // Wait for at least one loop iteration
         await _sut.StopAsync(cts.Token);

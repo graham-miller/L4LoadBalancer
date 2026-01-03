@@ -40,7 +40,7 @@ public class LoadBalancerServer : BackgroundService
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                TcpClient client = await listener.AcceptTcpClientAsync(cancellationToken);
+                var client = await listener.AcceptTcpClientAsync(cancellationToken);
                 _logger.LogDebug("Accepted connection from {RemoteEndPoint}", client.Client.RemoteEndPoint);
 
                 // Fire and forget the handling of this specific connection 

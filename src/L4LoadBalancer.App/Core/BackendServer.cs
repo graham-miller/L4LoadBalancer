@@ -10,15 +10,15 @@ public class BackendServer : IBackendServer
         EndPoint = endPoint;
     }
 
-    public IPEndPoint EndPoint { get; private set; }
+    public IPEndPoint EndPoint { get; }
 
-    public bool IsHealthy => _isHeathy;
+    public bool IsHealthy { get; private set; } = true;
 
     public int ActiveConnections => _activeConnections;
 
     public void SetHealthStatus(bool isHealthy)
     {
-        _isHeathy = isHealthy;
+        IsHealthy = isHealthy;
     }
 
     public void IncrementActiveConnections()
@@ -31,7 +31,5 @@ public class BackendServer : IBackendServer
         Interlocked.Decrement(ref _activeConnections);
     }
 
-    private bool _isHeathy = true;
-
-    private int _activeConnections = 0;
+    private int _activeConnections;
 }

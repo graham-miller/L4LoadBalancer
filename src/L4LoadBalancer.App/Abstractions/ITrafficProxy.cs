@@ -4,5 +4,5 @@ namespace L4LoadBalancer.App.Abstractions;
 
 public interface ITrafficProxy
 {
-    Task ProxyTrafficAsync(TcpClient client, IBackendServer backend, CancellationToken ct);
+    Task ProxyTrafficAsync(TcpClient client, IBackendServer server, CancellationToken ct);
 }

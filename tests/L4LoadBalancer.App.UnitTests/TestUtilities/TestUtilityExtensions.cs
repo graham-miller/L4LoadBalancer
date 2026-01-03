@@ -20,7 +20,7 @@ internal static class TestUtilityExtensions
             var backend = new BackendServer(IPEndPoint.Create());
             backend.SetHealthStatus(isHealthy);
 
-            for (int i = 0; i < activeConnections; i++)
+            for (var i = 0; i < activeConnections; i++)
             {
                 backend.IncrementActiveConnections();
             }

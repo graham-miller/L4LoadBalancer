@@ -25,7 +25,7 @@ public class TestBackendWorker : BackgroundService
         listener.Start();
         _logger.LogInformation("[Backend] Listening on port {Port}...", _port);
 
-        using (cancellationToken.Register(listener.Stop))
+        await using (cancellationToken.Register(listener.Stop))
         {
             try
             {
