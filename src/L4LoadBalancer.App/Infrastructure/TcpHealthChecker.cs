@@ -1,12 +1,11 @@
 ﻿using L4LoadBalancer.App.Abstractions;
-using L4LoadBalancer.App.Core;
 using System.Net.Sockets;
 
 namespace L4LoadBalancer.App.Infrastructure;
 
 public class TcpHealthChecker : IHealthChecker
 {
-    public async Task<bool> IsServerAliveAsync(BackendServer server, TimeSpan timeout, CancellationToken cancellationToken)
+    public async Task<bool> IsServerAliveAsync(IBackendServer server, TimeSpan timeout, CancellationToken cancellationToken)
     {
         using var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         linkedTokenSource.CancelAfter(timeout);

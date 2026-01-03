@@ -2,41 +2,81 @@
 using L4LoadBalancer.App.UnitTests.TestUtilities;
 using System.Net;
 
-namespace L4LoadBalancer.App.UnitTests.Core;
+namespace L4LoadBalancer.App.Tests;
 
 [TestFixture]
 public class BackendServerTests
 {
-    [Test]
-    public void Constructor_InitializesPropertiesCorrectly()
+    private IPEndPoint _testEndPoint;
+    private BackendServer _sut;
+
+    [SetUp]
+    public void Setup()
     {
-        // Arrange
-        var endpoint = IPEndPoint.Create();
+        _testEndPoint = IPEndPoint.Create();
+        _sut = new BackendServer(_testEndPoint);
+    }
 
-        // Act
-        var server = new BackendServer(endpoint);
-
+    [Test]
+    public void Constructor_ShouldInitializeCorrectly()
+    {
         // Assert
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(server.EndPoint, Is.EqualTo(endpoint));
-            Assert.That(server.IsHealthy, Is.True);
-            Assert.That(server.ActiveConnections, Is.Zero);
-            Assert.That(server.Id, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(_sut.EndPoint, Is.EqualTo(_testEndPoint));
+            Assert.That(_sut.IsHealthy, Is.True);
+            Assert.That(_sut.ActiveConnections, Is.Zero);
         };
     }
 
     [Test]
-    public void Id_ShouldBeUniqueForEveryInstance()
+    [TestCase(true)]
+    [TestCase(false)]
+    public void SetHealthStatus_ShouldUpdateState(bool status)
     {
-        // Arrange
-        var endpoint = IPEndPoint.Create();
-
         // Act
-        var server1 = new BackendServer(endpoint);
-        var server2 = new BackendServer(endpoint);
+        _sut.SetHealthStatus(status);
 
         // Assert
-        Assert.That(server1.Id, Is.Not.EqualTo(server2.Id));
+        Assert.That(_sut.IsHealthy, Is.EqualTo(status));
+    }
+
+    [Test]
+    public void IncrementActiveConnections_ShouldIncreaseCount()
+    {
+        // Act
+        _sut.IncrementActiveConnections();
+        _sut.IncrementActiveConnections();
+
+        // Assert
+        Assert.That(_sut.ActiveConnections, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void DecrementActiveConnections_ShouldDecreaseCount()
+    {
+        // Arrange
+        _sut.IncrementActiveConnections();
+        _sut.IncrementActiveConnections();
+
+        // Act
+        _sut.DecrementActiveConnections();
+
+        // Assert
+        Assert.That(_sut.ActiveConnections, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void ConnectionCount_ShouldBeThreadSafe()
+    {
+        // This tests the Interlocked implementation roughly
+        const int iterations = 1000;
+
+        Parallel.For(0, iterations, _ =>
+        {
+            _sut.IncrementActiveConnections();
+        });
+
+        Assert.That(_sut.ActiveConnections, Is.EqualTo(iterations));
     }
 }

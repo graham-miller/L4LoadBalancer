@@ -46,7 +46,7 @@ public class HealthMonitorServiceTests
         // Arrange
         _registry.RegisterServer(IPEndPoint.Create());
         var server = _registry.GetAll().First();
-        server.IsHealthy = true;
+        server.SetHealthStatus(true);
 
         // Mock the checker to return false (Unhealthy)
         _healthChecker

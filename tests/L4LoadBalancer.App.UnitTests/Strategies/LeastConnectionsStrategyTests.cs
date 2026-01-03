@@ -44,7 +44,7 @@ public class LeastConnectionsStrategyTests
     {
         // Arrange
         var unhealthyIdleServer = BackendServer.Create(activeConnections: 0);
-        unhealthyIdleServer.IsHealthy = false;
+        unhealthyIdleServer.SetHealthStatus(false);
 
         var healthyBusyServer = BackendServer.Create(activeConnections: 20);
 

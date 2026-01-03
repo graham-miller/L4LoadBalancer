@@ -5,12 +5,12 @@ namespace L4LoadBalancer.App.Core;
 
 public class BackendRegistry
 {
-    private readonly ConcurrentBag<BackendServer> _servers = [];
+    private readonly ConcurrentBag<BackendServer> _backends = [];
 
     public void RegisterServer(IPEndPoint endpoint)
     {
-        _servers.Add(new BackendServer(endpoint));
+        _backends.Add(new BackendServer(endpoint));
     }
 
-    public IEnumerable<BackendServer> GetAll() => _servers;
+    public IEnumerable<BackendServer> GetAll() => _backends;
 }

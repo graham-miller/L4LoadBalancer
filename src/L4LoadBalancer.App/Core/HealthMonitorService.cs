@@ -38,7 +38,7 @@ public class HealthMonitorService : BackgroundService
 
                 if (server.IsHealthy != isAlive)
                 {
-                    server.IsHealthy = isAlive;
+                    server.SetHealthStatus(isAlive);
                     _logger.LogWarning("Server {EndPoint} health changed to: {Status}",
                         server.EndPoint, isAlive ? "Healthy" : "Unhealthy");
                 }

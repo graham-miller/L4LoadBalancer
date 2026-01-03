@@ -17,11 +17,15 @@ internal static class TestUtilityExtensions
     {
         public static BackendServer Create(bool isHealthy = true, int activeConnections = 0)
         {
-            return new BackendServer(IPEndPoint.Create())
+            var backend = new BackendServer(IPEndPoint.Create());
+            backend.SetHealthStatus(isHealthy);
+
+            for (int i = 0; i < activeConnections; i++)
             {
-                IsHealthy = isHealthy,
-                ActiveConnections = activeConnections
-            };
+                backend.IncrementActiveConnections();
+            }
+            
+            return backend;
         }
     }
 }
