@@ -6,30 +6,32 @@ namespace L4LoadBalancer.AppHost.Extensions;
 
 internal static class LoadBalancerProjectResourceBuilderExtensions
 {
-    public static IResourceBuilder<ProjectResource> WithSendTcpTestCommands(
-        this IResourceBuilder<ProjectResource> builder,
-        EndpointReference endpoint)
+    extension(IResourceBuilder<ProjectResource> builder)
     {
-        var commandOptions = new CommandOptions
+        public IResourceBuilder<ProjectResource> WithSendTcpTestCommands(
+            EndpointReference endpoint)
         {
-            UpdateState = OnUpdateResourceState,
-            IconName = "Send",
-            IconVariant = IconVariant.Regular
-        };
+            var commandOptions = new CommandOptions
+            {
+                UpdateState = OnUpdateResourceState,
+                IconName = "Send",
+                IconVariant = IconVariant.Regular
+            };
 
-        builder.WithCommand(
-            name: "send-tcp-test",
-            displayName: "Send TCP test packet",
-            executeCommand: context => OnRunSendTcpTestCommand(context, endpoint),
-            commandOptions: commandOptions);
-        
-        builder.WithCommand(
-            name: "send-multiple tcp-test",
-            displayName: "Send multiple TCP test packets",
-            executeCommand: context => OnRunSendTcpTestCommand(context, endpoint, 10),
-            commandOptions: commandOptions);
+            builder.WithCommand(
+                name: "send-tcp-test",
+                displayName: "Send TCP test packet",
+                executeCommand: context => OnRunSendTcpTestCommand(context, endpoint),
+                commandOptions: commandOptions);
 
-        return builder;
+            builder.WithCommand(
+                name: "send-multiple tcp-test",
+                displayName: "Send multiple TCP test packets",
+                executeCommand: context => OnRunSendTcpTestCommand(context, endpoint, 10),
+                commandOptions: commandOptions);
+
+            return builder;
+        }
     }
 
     private static async Task<ExecuteCommandResult> OnRunSendTcpTestCommand(

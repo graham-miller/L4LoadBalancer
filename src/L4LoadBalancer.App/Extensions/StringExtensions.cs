@@ -2,7 +2,7 @@
 
 namespace L4LoadBalancer.App.Extensions;
 
-public static class HostApplicationBuilderExtensions
+public static class StringExtensions
 {
     extension(string uriString)
     {
