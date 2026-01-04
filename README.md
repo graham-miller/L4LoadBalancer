@@ -12,7 +12,7 @@ A software-based Layer 4 (TCP) load balancer for distributing traffic across mul
 
 ## Architecture
 
-- Logical separation of concerns following Clean Architecture within _L4LoadBalancer.App_ project.
+- Logical separation of concerns following Clean Architecture within the _L4LoadBalancer.App_ project.
 This separation of concerns could be refactored to multiple projects as the solution grows.
 
 ## Getting started
@@ -38,25 +38,41 @@ Alternatively, if you have Aspire CLI installed, it can be used to start the dem
 aspire run
 ```
 
-Then, login to the Aspire dashboard at https://l4loadbalancer.dev.localhost:17263/login?t=83ca573c7817570d5febd682fa90e348.
+Login to the Aspire dashboard at https://l4loadbalancer.dev.localhost:17263/login?t=83ca573c7817570d5febd682fa90e348.
 
 
 - Load balancer listens on port 8080.
 - Test backends run on ports 5001, 5002, 5003.
 - Use Aspire custom resource commands on `loadbalancer` to send TCP test packets:
   - **Send TCP test packet**: sends single test packet.
-  - **Send multiple TCP test packets**: sends multiple packets to demonstrate load balancing.
+  - **Send multiple TCP test packets**: sends 10 packets to demonstrate load balancing.
 
 ![L4LoadBalancer Aspire dashboard showing custom resource commands for testing](docs/resources/aspire-dashboard.png)
 
-## Configuration
+The demo environment can be configured in `L4LoadBalancer.AppHost/appsettings.json`:
+```
+{
+  "L4Demo": {
+    "PublicPort": 8080,
+    "BackendPorts": [ 5001, 5002, 5003 ],
+    "MultipleTcpTestCount": 10
+  }
+}
+```
+
+## Load balancer configuration
 
 ### LoadBalancing strategy
 
 In `src/L4LoadBalancer.App/appsettings.json`:
 
 ```
-{ "LoadBalancer": { "Strategy": "RoundRobin"  // or "LeastConnections" } }
+{
+  "LoadBalancer": {
+        "Strategy": "RoundRobin"
+        // OR "Strategy": "LeastConnections"
+  }
+}
 ```
 
 - `RoundRobin`: cycles through healthy servers sequentially. Best for uniform workloads.
@@ -66,18 +82,27 @@ In `src/L4LoadBalancer.App/appsettings.json`:
 ### Health monitoring
 
 ```
-{ "HealthMonitor": { "CheckInterval": "00:00:05", "Timeout": "00:00:02" } }
+{
+  "HealthMonitor": {
+    "CheckInterval": "00:00:05",
+    "Timeout": "00:00:02"
+  }
+}
 ```
 
 ## Testing
 
 ### Unit tests
 
+Run unit tests:
+
 ```
 dotnet test tests/L4LoadBalancer.App.UnitTests/
 ```
 
 ### Integration tests
+
+Run integration tests:
 
 ```
 dotnet test tests/L4LoadBalancer.App.IntegrationTests/

@@ -6,6 +6,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 var config = builder.Configuration.GetSection("L4Demo");
 var backendPorts = config.GetSection("BackendPorts").Get<int[]>() ?? [];
 var publicPort = config.GetValue<int>("PublicPort");
+var multipleTcpTestCount = config.GetValue<int>("MultipleTcpTestCount");
 
 const string publicEndpointName = "public";
 var loadBalancer = builder
@@ -14,7 +15,7 @@ var loadBalancer = builder
     .WithEnvironment("PORT", publicPort.ToString());
 
 loadBalancer
-    .WithSendTcpTestCommands(loadBalancer.GetEndpoint(publicEndpointName));
+    .WithSendTcpTestCommands(loadBalancer.GetEndpoint(publicEndpointName), multipleTcpTestCount);
 
 for (var i = 0; i < backendPorts.Length; i++)
 {

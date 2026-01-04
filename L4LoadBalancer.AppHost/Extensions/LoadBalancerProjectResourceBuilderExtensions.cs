@@ -9,7 +9,8 @@ internal static class LoadBalancerProjectResourceBuilderExtensions
     extension(IResourceBuilder<ProjectResource> builder)
     {
         public IResourceBuilder<ProjectResource> WithSendTcpTestCommands(
-            EndpointReference endpoint)
+            EndpointReference endpoint,
+            int multipleTcpTestCount = 10)
         {
             var commandOptions = new CommandOptions
             {
@@ -27,7 +28,7 @@ internal static class LoadBalancerProjectResourceBuilderExtensions
             builder.WithCommand(
                 name: "send-multiple tcp-test",
                 displayName: "Send multiple TCP test packets",
-                executeCommand: context => OnRunSendTcpTestCommand(context, endpoint, 10),
+                executeCommand: context => OnRunSendTcpTestCommand(context, endpoint, multipleTcpTestCount),
                 commandOptions: commandOptions);
 
             return builder;
