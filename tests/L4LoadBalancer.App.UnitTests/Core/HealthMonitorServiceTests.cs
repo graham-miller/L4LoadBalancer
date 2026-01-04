@@ -37,7 +37,7 @@ public class HealthMonitorServiceTests
     [TearDown]
     public void TearDown()
     {
-        _sut?.Dispose();
+        _sut.Dispose();
     }
 
     [Test]

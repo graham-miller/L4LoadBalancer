@@ -14,7 +14,7 @@ public class RoundRobinStrategy : ILoadBalancingStrategy
         if (pool.Count == 0) return null;
 
         // Increment atomically and use modulo to wrap around the list size
-        int index = Interlocked.Increment(ref _nextServerIndex);
+        var index = Interlocked.Increment(ref _nextServerIndex);
         return pool[index % pool.Count];
     }
 }

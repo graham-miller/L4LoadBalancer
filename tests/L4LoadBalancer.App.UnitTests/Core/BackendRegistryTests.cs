@@ -74,7 +74,7 @@ public class BackendRegistryTests
         // Act
         Parallel.For(0, numberOfThreads, _ =>
         {
-            for (int i = 0; i < serversPerThread; i++)
+            for (var i = 0; i < serversPerThread; i++)
             {
                 _sut.RegisterServer(IPEndPoint.Create());
             }
